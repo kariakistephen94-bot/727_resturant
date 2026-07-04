@@ -19,7 +19,13 @@ export function buildOrderWhatsAppMessage(
     `Name: ${order.customer.fullName}`,
     `Phone: ${order.customer.phone}`,
     `Email: ${order.customer.email}`,
-    `Order type: ${order.fulfillment.type === 'delivery' ? 'Delivery' : 'Pickup'}`,
+    `Order type: ${
+      order.fulfillment.type === 'dine-in'
+        ? `Dine-in (Table ${order.fulfillment.tableNumber ?? '—'})`
+        : order.fulfillment.type === 'delivery'
+          ? 'Delivery'
+          : 'Pickup'
+    }`,
   ];
 
   if (order.fulfillment.type === 'delivery') {

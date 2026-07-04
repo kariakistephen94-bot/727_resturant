@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { PlaceHolderImages } from '@/lib/placeholder-images'
 import { defaultSiteSettings, type SiteSettings } from '@/lib/site-settings'
+import { TableBanner } from '@/components/table/TableBanner'
 import { useCart } from '@/context/cart-context'
 import { useToast } from '@/hooks/use-toast'
 import { formatNaira } from '@/lib/format'
@@ -229,14 +230,15 @@ export default function Home() {
     </div>
   </section>
 
-  {/* Full Menu — The Grill List */}
+  {/* Full Menu */}
   <section id="menu" className="py-16 md:py-24 px-4 bg-background scroll-mt-24">
     <div className="max-w-7xl mx-auto">
+      <TableBanner />
       <div className="text-center mb-10 md:mb-16">
         <p className="text-primary font-semibold text-xs md:text-sm tracking-[0.2em] uppercase mb-3">Our Specialties</p>
         <h2 className="text-4xl md:text-6xl font-headline font-bold tracking-apple">The 724 Menu</h2>
         <p className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mt-4 leading-relaxed">
-          Grilled fish, Naija classics and chilled drinks — prepared fresh on NERDC Road, Agidingbi, Ikeja.
+          Grilled fish, Naija classics and chilled drinks prepared fresh on NERDC Road, Agidingbi, Ikeja.
         </p>
       </div>
 
@@ -449,7 +451,7 @@ export default function Home() {
         <div className="space-y-7">
           {[
             { icon: Clock, title: "Open 24 Hours, Every Day", desc: "Day parties, late nights or 6am cravings the kitchen and bar at 724 never close." },
-            { icon: Flame, title: "Grilled Fish Worth the Trip", desc: "Our char-grilled fish with fries or jollof is the plate regulars swear by — alongside pounded yam & egusi and spicy isi ewu." },
+            { icon: Flame, title: "Grilled Fish Worth the Trip", desc: "Our char-grilled fish with fries or jollof is the plate regulars swear by alongside pounded yam & egusi and spicy isi ewu." },
             { icon: Music, title: "Good Music, Better Vibes", desc: "A proper chilling spot in Agidingbi cold drinks, nice music, friendly staff and space to breathe, with greenery inside." }
           ].map((item, i) => (
             <div key={i} className="flex gap-5">
@@ -519,7 +521,7 @@ export default function Home() {
           </h2>
 
           <p className="text-base md:text-lg text-background/70 max-w-md mx-auto">
-            Grilled fish, Naija classics and chilled drinks — any hour, any day.
+            Grilled fish, Naija classics and chilled drinks any hour, any day.
           </p>
 
           <Button

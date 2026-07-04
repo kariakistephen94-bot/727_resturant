@@ -30,16 +30,20 @@ export interface DummyOrderItem {
   addons: DummyAddon[] | null;
 }
 
+export type FulfillmentKind = 'delivery' | 'pickup' | 'dine-in';
+
 export interface DummyOrder {
   id: string;
   tracking_id: string;
   customer_name: string;
   customer_phone: string;
   customer_email: string;
-  fulfillment_type: 'delivery' | 'pickup';
+  fulfillment_type: FulfillmentKind;
   fulfillment_address: string | null;
   fulfillment_area: string | null;
   fulfillment_notes: string | null;
+  table_number: string | null;
+  table_session_id: string | null;
   subtotal: number;
   delivery_fee: number;
   total: number;
@@ -49,6 +53,25 @@ export interface DummyOrder {
   created_at: string;
   updated_at: string;
   order_items: DummyOrderItem[];
+}
+
+// ---- Dine-in tables & sessions ----
+// A table is a physical table with a QR code pointing at /table/<id>.
+// A session groups every order placed from that table between "first order"
+// and "admin confirms payment & closes" (eat first, pay after).
+export interface DummyTable {
+  id: number;
+  label: string;
+  created_at: string;
+}
+
+export interface DummyTableSession {
+  id: string;
+  table_id: number;
+  table_label: string;
+  status: 'open' | 'closed';
+  opened_at: string;
+  closed_at: string | null;
 }
 
 let menuItems: DummyMenuItem[] = [
@@ -74,6 +97,8 @@ let orders: DummyOrder[] = [
     fulfillment_address: '12 Adekunle Street',
     fulfillment_area: 'Agidingbi',
     fulfillment_notes: 'Extra pepper please',
+    table_number: null,
+    table_session_id: null,
     subtotal: 12000,
     delivery_fee: 0,
     total: 12000,
@@ -97,6 +122,8 @@ let orders: DummyOrder[] = [
     fulfillment_address: null,
     fulfillment_area: null,
     fulfillment_notes: null,
+    table_number: null,
+    table_session_id: null,
     subtotal: 6000,
     delivery_fee: 0,
     total: 6000,
@@ -119,6 +146,8 @@ let orders: DummyOrder[] = [
     fulfillment_address: '5 Balogun Close',
     fulfillment_area: 'Ogba',
     fulfillment_notes: null,
+    table_number: null,
+    table_session_id: null,
     subtotal: 5000,
     delivery_fee: 0,
     total: 5000,
@@ -132,6 +161,17 @@ let orders: DummyOrder[] = [
     ],
   },
 ];
+
+// Seed a few tables so the dine-in flow works out of the box; admins can add more.
+let tables: DummyTable[] = [
+  { id: 1, label: '1', created_at: '2026-07-01T09:00:00.000Z' },
+  { id: 2, label: '2', created_at: '2026-07-01T09:00:00.000Z' },
+  { id: 3, label: '3', created_at: '2026-07-01T09:00:00.000Z' },
+  { id: 4, label: '4', created_at: '2026-07-01T09:00:00.000Z' },
+];
+let nextTableId = tables.length + 1;
+
+let tableSessions: DummyTableSession[] = [];
 
 let siteSettings: SiteSettingsRow = {
   ...mapSiteSettingsToRow(defaultSiteSettings),
@@ -181,10 +221,11 @@ export interface CreateOrderInput {
   customer_name: string;
   customer_phone: string;
   customer_email: string;
-  fulfillment_type: 'delivery' | 'pickup';
+  fulfillment_type: FulfillmentKind;
   fulfillment_address: string | null;
   fulfillment_area: string | null;
   fulfillment_notes: string | null;
+  table_id?: number | null;
   subtotal: number;
   delivery_fee: number;
   total: number;
@@ -195,6 +236,19 @@ export interface CreateOrderInput {
 
 export function createOrder(input: CreateOrderInput): DummyOrder {
   const now = new Date().toISOString();
+
+  // Dine-in orders join the table's open session (or start one) so every
+  // plate ordered during the meal lands on the same bill.
+  let tableNumber: string | null = null;
+  let tableSessionId: string | null = null;
+  if (input.fulfillment_type === 'dine-in' && input.table_id != null) {
+    const session = openSessionForTable(input.table_id);
+    if (session) {
+      tableNumber = session.table_label;
+      tableSessionId = session.id;
+    }
+  }
+
   const order: DummyOrder = {
     id: `ord_${crypto.randomUUID()}`,
     tracking_id: input.tracking_id,
@@ -205,6 +259,8 @@ export function createOrder(input: CreateOrderInput): DummyOrder {
     fulfillment_address: input.fulfillment_address,
     fulfillment_area: input.fulfillment_area,
     fulfillment_notes: input.fulfillment_notes,
+    table_number: tableNumber,
+    table_session_id: tableSessionId,
     subtotal: input.subtotal,
     delivery_fee: input.delivery_fee,
     total: input.total,
@@ -238,6 +294,115 @@ export function updateOrder(id: string, patch: OrderPatch): DummyOrder | null {
   if (index === -1) return null;
   orders[index] = { ...orders[index], ...patch, updated_at: new Date().toISOString() };
   return orders[index];
+}
+
+// ---- Tables ----
+export function listTables(): DummyTable[] {
+  return [...tables].sort((a, b) => a.id - b.id);
+}
+
+export function findTableById(id: number): DummyTable | null {
+  return tables.find((t) => t.id === id) ?? null;
+}
+
+export function createTable(label?: string): DummyTable {
+  const id = nextTableId++;
+  const table: DummyTable = {
+    id,
+    label: (label ?? '').trim() || String(id),
+    created_at: new Date().toISOString(),
+  };
+  tables.push(table);
+  return table;
+}
+
+// A table with an open session can't be deleted — the bill must be settled first.
+export function deleteTable(id: number): { ok: boolean; error?: string } {
+  if (!findTableById(id)) return { ok: false, error: 'Table not found' };
+  if (findOpenSessionForTable(id)) {
+    return { ok: false, error: 'This table has an open session. Close it before deleting the table.' };
+  }
+  tables = tables.filter((t) => t.id !== id);
+  return { ok: true };
+}
+
+// ---- Table sessions ----
+export function findOpenSessionForTable(tableId: number): DummyTableSession | null {
+  return tableSessions.find((s) => s.table_id === tableId && s.status === 'open') ?? null;
+}
+
+export function findTableSessionById(id: string): DummyTableSession | null {
+  return tableSessions.find((s) => s.id === id) ?? null;
+}
+
+// Find-or-create: the first order from a table opens its session.
+export function openSessionForTable(tableId: number): DummyTableSession | null {
+  const table = findTableById(tableId);
+  if (!table) return null;
+  const existing = findOpenSessionForTable(tableId);
+  if (existing) return existing;
+  const session: DummyTableSession = {
+    id: `ts_${crypto.randomUUID()}`,
+    table_id: table.id,
+    table_label: table.label,
+    status: 'open',
+    opened_at: new Date().toISOString(),
+    closed_at: null,
+  };
+  tableSessions.push(session);
+  return session;
+}
+
+export function listOrdersForSession(sessionId: string): DummyOrder[] {
+  return orders
+    .filter((o) => o.table_session_id === sessionId)
+    .sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+}
+
+export interface TableSessionWithOrders extends DummyTableSession {
+  orders: DummyOrder[];
+  total: number;
+}
+
+export function listTableSessions(status?: 'open' | 'closed'): TableSessionWithOrders[] {
+  return tableSessions
+    .filter((s) => (status ? s.status === status : true))
+    .sort((a, b) => +new Date(b.opened_at) - +new Date(a.opened_at))
+    .map((s) => {
+      const sessionOrders = listOrdersForSession(s.id);
+      return {
+        ...s,
+        orders: sessionOrders,
+        total: sessionOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+      };
+    });
+}
+
+// Closing a session = payment received for the whole table: mark every order
+// on the session as paid & delivered, then close the session.
+export function closeTableSession(sessionId: string): TableSessionWithOrders | null {
+  const index = tableSessions.findIndex((s) => s.id === sessionId);
+  if (index === -1) return null;
+  if (tableSessions[index].status === 'open') {
+    tableSessions[index] = {
+      ...tableSessions[index],
+      status: 'closed',
+      closed_at: new Date().toISOString(),
+    };
+    const now = new Date().toISOString();
+    orders = orders.map((o) =>
+      o.table_session_id === sessionId
+        ? { ...o, payment_confirmed: true, status: 'delivered', updated_at: now }
+        : o
+    );
+  }
+  const closed = tableSessions[index];
+  const sessionOrders = listOrdersForSession(closed.id);
+  return {
+    ...closed,
+    orders: sessionOrders,
+    total: sessionOrders.reduce((sum, o) => sum + Number(o.total || 0), 0),
+  };
 }
 
 // ---- Site settings ----

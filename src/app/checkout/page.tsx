@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ import { PaymentDetails } from '@/components/checkout/payment-details';
 import { useCart } from '@/context/cart-context';
 import { formatNaira } from '@/lib/format';
 import { generateTrackingId, saveOrder, type FulfillmentType } from '@/lib/orders';
+import { getTableContext, clearTableContext, type TableContext } from '@/lib/table-session';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function CheckoutPage() {
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
 
   const [fulfillmentType, setFulfillmentType] =
     useState<FulfillmentType>('delivery');
+  const [tableCtx, setTableCtx] = useState<TableContext | null>(null);
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -36,6 +38,24 @@ export default function CheckoutPage() {
 
   const total = subtotal;
 
+  // Guests who scanned a table QR check out in dine-in mode: no address, no
+  // upfront payment — the order goes to the kitchen and they pay after eating.
+  useEffect(() => {
+    const ctx = getTableContext();
+    if (ctx) {
+      setTableCtx(ctx);
+      setFulfillmentType('dine-in');
+    }
+  }, []);
+
+  const isDineIn = fulfillmentType === 'dine-in' && !!tableCtx;
+
+  const switchToTakeaway = () => {
+    clearTableContext();
+    setTableCtx(null);
+    setFulfillmentType('delivery');
+  };
+
   const getImageSrc = (image: string | null | undefined) => {
     if (!image) return PlaceHolderImages[0]?.imageUrl || '/placeholder.png';
     if (image.startsWith('http') || image.startsWith('data:')) return image;
@@ -45,17 +65,19 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!fullName.trim()) next.fullName = 'Full name is required';
-    if (!phone.trim()) next.phone = 'Phone number is required';
-    if (!email.trim()) next.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-      next.email = 'Enter a valid email';
-    if (fulfillmentType === 'delivery') {
-      if (!address.trim()) next.address = 'Delivery address is required';
-      if (!area.trim()) next.area = 'Area / landmark is required';
+    if (!fullName.trim()) next.fullName = 'Your name is required';
+    if (!isDineIn) {
+      if (!phone.trim()) next.phone = 'Phone number is required';
+      if (!email.trim()) next.email = 'Email is required';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        next.email = 'Enter a valid email';
+      if (fulfillmentType === 'delivery') {
+        if (!address.trim()) next.address = 'Delivery address is required';
+        if (!area.trim()) next.area = 'Area / landmark is required';
+      }
+      if (!paymentConfirmed)
+        next.payment = 'Please confirm you have made the payment';
     }
-    if (!paymentConfirmed)
-      next.payment = 'Please confirm you have made the payment';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -75,11 +97,13 @@ export default function CheckoutPage() {
       fulfillment_address: address.trim() || null,
       fulfillment_area: area.trim() || null,
       fulfillment_notes: notes.trim() || null,
+      table_id: isDineIn ? tableCtx!.tableId : null,
       subtotal,
       delivery_fee: 0,
       total,
       payment_confirmed: false,
-      status: 'pending',
+      // Dine-in goes straight to the kitchen — payment happens after the meal.
+      status: isDineIn ? 'preparing' : 'pending',
       items: items.map(item => ({
         id: item.id,
         name: item.name,
@@ -122,6 +146,7 @@ export default function CheckoutPage() {
         address: address.trim(),
         area: area.trim(),
         notes: notes.trim(),
+        tableNumber: isDineIn ? tableCtx!.tableLabel : null,
       },
       items: [...items],
       subtotal,
@@ -190,7 +215,9 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="phone" className="text-sm sm:text-base">Phone number</Label>
+                  <Label htmlFor="phone" className="text-sm sm:text-base">
+                    Phone number{isDineIn ? ' (optional)' : ''}
+                  </Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -203,26 +230,55 @@ export default function CheckoutPage() {
                     <p className="text-[10px] sm:text-xs text-destructive">{errors.phone}</p>
                   )}
                 </div>
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@email.com"
-                    className="h-10 sm:h-12 rounded-lg sm:rounded-xl bg-background border-input text-sm sm:text-base"
-                  />
-                  {errors.email && (
-                    <p className="text-[10px] sm:text-xs text-destructive">{errors.email}</p>
-                  )}
-                </div>
+                {!isDineIn && (
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@email.com"
+                      className="h-10 sm:h-12 rounded-lg sm:rounded-xl bg-background border-input text-sm sm:text-base"
+                    />
+                    {errors.email && (
+                      <p className="text-[10px] sm:text-xs text-destructive">{errors.email}</p>
+                    )}
+                  </div>
+                )}
               </div>
             </section>
 
-            {/* Pickup or Delivery Section */}
+            {/* Dine-in / Pickup / Delivery Section */}
             <section className="glass-card rounded-xl sm:rounded-2xl md:rounded-[2rem] p-4 sm:p-6 md:p-8 border-border">
-              <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">Pickup or delivery</h2>
+              <h2 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6">
+                {isDineIn ? 'Dine-in' : 'Pickup or delivery'}
+              </h2>
+
+              {isDineIn && (
+                <div className="rounded-xl sm:rounded-2xl border border-primary bg-primary/10 p-4 sm:p-5 mb-4 sm:mb-6 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
+                    <Utensils className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-sm sm:text-base">Serving to Table {tableCtx?.tableLabel}</p>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+                      Your order goes straight to the kitchen and we bring it to your table.
+                      Order more rounds anytime — it all lands on one bill.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={switchToTakeaway}
+                      className="text-[11px] sm:text-xs font-bold text-primary hover:underline mt-2"
+                    >
+                      Not at this table? Switch to delivery / pickup
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isDineIn && (
+              <>
               <RadioGroup
                 value={fulfillmentType}
                 onValueChange={(v) => setFulfillmentType(v as FulfillmentType)}
@@ -288,6 +344,8 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               )}
+              </>
+              )}
 
               <div className="space-y-1.5 sm:space-y-2 mt-3 sm:mt-4">
                 <Label htmlFor="notes" className="text-sm sm:text-base">Order notes (optional)</Label>
@@ -304,24 +362,37 @@ export default function CheckoutPage() {
             {/* Payment Section */}
             <section className="glass-card rounded-xl sm:rounded-2xl md:rounded-[2rem] p-4 sm:p-6 md:p-8 border-border">
               <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Payment</h2>
-              <PaymentDetails />
-              <div className="mt-4 sm:mt-6 flex items-start gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-border bg-muted p-3 sm:p-4">
-                <Checkbox
-                  id="paymentConfirmed"
-                  checked={paymentConfirmed}
-                  onCheckedChange={(c) => setPaymentConfirmed(c === true)}
-                  className="mt-0.5"
-                />
-                <label
-                  htmlFor="paymentConfirmed"
-                  className="text-xs sm:text-sm leading-relaxed cursor-pointer"
-                >
-                  Yes, I&apos;ve made the payment to the account above for{' '}
-                  <span className="font-bold text-primary">{formatNaira(total)}</span>
-                </label>
-              </div>
-              {errors.payment && (
-                <p className="text-[10px] sm:text-xs text-destructive mt-2 sm:mt-2">{errors.payment}</p>
+              {isDineIn ? (
+                <div className="rounded-xl sm:rounded-2xl border border-border bg-muted p-4 sm:p-5">
+                  <p className="font-bold text-sm sm:text-base mb-1">Pay after your meal 🍽️</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    No payment needed now. Enjoy your food — when you&apos;re done, ask for your
+                    bill and settle everything for Table {tableCtx?.tableLabel} at once (cash,
+                    transfer or POS).
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <PaymentDetails />
+                  <div className="mt-4 sm:mt-6 flex items-start gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-border bg-muted p-3 sm:p-4">
+                    <Checkbox
+                      id="paymentConfirmed"
+                      checked={paymentConfirmed}
+                      onCheckedChange={(c) => setPaymentConfirmed(c === true)}
+                      className="mt-0.5"
+                    />
+                    <label
+                      htmlFor="paymentConfirmed"
+                      className="text-xs sm:text-sm leading-relaxed cursor-pointer"
+                    >
+                      Yes, I&apos;ve made the payment to the account above for{' '}
+                      <span className="font-bold text-primary">{formatNaira(total)}</span>
+                    </label>
+                  </div>
+                  {errors.payment && (
+                    <p className="text-[10px] sm:text-xs text-destructive mt-2 sm:mt-2">{errors.payment}</p>
+                  )}
+                </>
               )}
             </section>
           </div>
@@ -380,7 +451,11 @@ export default function CheckoutPage() {
                 onClick={handlePlaceOrder}
                 disabled={submitting}
               >
-                {submitting ? 'Placing order...' : 'Place order'}
+                {submitting
+                  ? 'Placing order...'
+                  : isDineIn
+                    ? `Send to kitchen — Table ${tableCtx?.tableLabel}`
+                    : 'Place order'}
                 <ArrowRight className="ml-1.5 sm:ml-2 w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
               </Button>
             </div>

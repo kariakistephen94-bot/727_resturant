@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, Home, UtensilsCrossed, Settings, LogOut, ShoppingCart, Flame, Tag } from 'lucide-react';
+import { Menu, Home, UtensilsCrossed, Settings, LogOut, ShoppingCart, Flame, Tag, QrCode } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
 const sidebarItems = [
   { href: '/admin', icon: Home, label: 'Dashboard' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/admin/tables', icon: QrCode, label: 'Tables' },
   { href: '/admin/menu', icon: UtensilsCrossed, label: 'Menu Items' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ];

@@ -134,9 +134,15 @@ export async function downloadOrderReceipt(
     }
   }
 
+  const isDineIn = order.fulfillment.type === 'dine-in';
+  const fulfillmentLabel = isDineIn
+    ? `Dine-in · Table ${order.fulfillment.tableNumber ?? '—'}`
+    : order.fulfillment.type === 'delivery'
+      ? 'Delivery'
+      : 'Pickup';
   const infoRows: [string, string, RGB][] = [
-    ['Fulfillment', order.fulfillment.type === 'delivery' ? 'Delivery' : 'Pickup', DARK],
-    ['Payment method', 'Bank Transfer', DARK],
+    ['Fulfillment', fulfillmentLabel, DARK],
+    ['Payment method', isDineIn ? 'Pay at table' : 'Bank Transfer', DARK],
     ['Payment status', order.paymentConfirmed ? 'PAID' : 'PENDING', order.paymentConfirmed ? GREEN : AMBER],
   ];
   infoRows.forEach(([label, value, color]) => {
@@ -223,23 +229,29 @@ export async function downloadOrderReceipt(
   y += 14;
 
   // ===================== PAYMENT DETAILS BOX =====================
-  if (y > pageH - 50) {
+  // Dine-in guests settle at the table, so bank details would only confuse.
+  if (!isDineIn) {
+    if (y > pageH - 50) {
+      doc.addPage();
+      y = margin;
+    }
+    const boxH = 24;
+    fill(LIGHT);
+    doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
+    doc.roundedRect(margin, y, contentW, boxH, 2.5, 2.5, 'FD');
+    text('bold', 8, MUTED);
+    doc.text('PAYMENT DETAILS', margin + 5, y + 7);
+    text('bold', 11, DARK);
+    doc.text(bank.bank, margin + 5, y + 14.5);
+    text('normal', 10, DARK);
+    doc.text(bank.accountNumber, margin + 5, y + 20);
+    text('normal', 9.5, MUTED);
+    doc.text(bank.accountName, right - 5, y + 20, { align: 'right' });
+    y += boxH + 12;
+  } else if (y > pageH - 30) {
     doc.addPage();
     y = margin;
   }
-  const boxH = 24;
-  fill(LIGHT);
-  doc.setDrawColor(LINE[0], LINE[1], LINE[2]);
-  doc.roundedRect(margin, y, contentW, boxH, 2.5, 2.5, 'FD');
-  text('bold', 8, MUTED);
-  doc.text('PAYMENT DETAILS', margin + 5, y + 7);
-  text('bold', 11, DARK);
-  doc.text(bank.bank, margin + 5, y + 14.5);
-  text('normal', 10, DARK);
-  doc.text(bank.accountNumber, margin + 5, y + 20);
-  text('normal', 9.5, MUTED);
-  doc.text(bank.accountName, right - 5, y + 20, { align: 'right' });
-  y += boxH + 12;
 
   // ============================ FOOTER ============================
   text('bold', 10, DARK);

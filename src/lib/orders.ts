@@ -1,6 +1,6 @@
 import type { CartItem } from '@/context/cart-context';
 
-export type FulfillmentType = 'delivery' | 'pickup';
+export type FulfillmentType = 'delivery' | 'pickup' | 'dine-in';
 
 export interface OrderCustomer {
   fullName: string;
@@ -13,6 +13,8 @@ export interface OrderFulfillment {
   address: string;
   area: string;
   notes: string;
+  /** Set for dine-in orders placed from a table QR code. */
+  tableNumber?: string | null;
 }
 
 export interface Order {

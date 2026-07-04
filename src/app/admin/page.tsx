@@ -19,6 +19,7 @@ import {
   Flame,
   BarChart3,
   Sun,
+  QrCode,
 } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import {
@@ -87,6 +88,7 @@ const PIE_COLORS = ['#ea580c', '#dc2626', '#f59e0b', '#6366f1', '#8b5cf6', '#10b
 export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuItemsCount, setMenuItemsCount] = useState(0);
+  const [openTableSessions, setOpenTableSessions] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('trend');
   const [range, setRange] = useState('7');
@@ -96,15 +98,18 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       setIsLoading(true);
 
-      const [ordersRes, menuRes] = await Promise.all([
+      const [ordersRes, menuRes, sessionsRes] = await Promise.all([
         fetch('/api/orders'),
         fetch('/api/menu-items'),
+        fetch('/api/table-sessions?status=open'),
       ]);
       const ordersData = await ordersRes.json();
       const menuData = await menuRes.json();
+      const sessionsData = await sessionsRes.json();
 
       setOrders(ordersData.orders || []);
       setMenuItemsCount(Array.isArray(menuData) ? menuData.length : 0);
+      setOpenTableSessions(Array.isArray(sessionsData.sessions) ? sessionsData.sessions.length : 0);
       setIsLoading(false);
     };
 
@@ -281,6 +286,14 @@ export default function DashboardPage() {
       sub: 'Completed orders',
       icon: CheckCircle2,
       tint: 'bg-emerald-100 text-emerald-600',
+    },
+    {
+      title: 'Open Tables',
+      value: compactNumber(openTableSessions),
+      full: formatNumber(openTableSessions),
+      sub: 'Dine-in sessions running',
+      icon: QrCode,
+      tint: 'bg-rose-100 text-rose-700',
     },
     {
       title: 'Menu Items',

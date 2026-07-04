@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOrder, findOrderByTrackingId, listOrders } from '@/lib/server/dummy-db';
+import { createOrder, findOrderByTrackingId, findTableById, listOrders } from '@/lib/server/dummy-db';
 
 // GET /api/orders?tracking_id=GJ-XXXXX  -> single order lookup (customer Track page)
 // GET /api/orders                       -> all orders (admin dashboard/orders page)
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       fulfillment_address,
       fulfillment_area,
       fulfillment_notes,
+      table_id,
       subtotal,
       delivery_fee,
       total,
@@ -38,9 +39,20 @@ export async function POST(request: NextRequest) {
       items,
     } = body;
 
-    if (!tracking_id || !customer_name || !customer_phone || !customer_email) {
+    const isDineIn = fulfillment_type === 'dine-in';
+
+    // Dine-in guests just give a name — they're at the table, so phone/email
+    // aren't needed. Delivery/pickup still require full contact details.
+    if (!tracking_id || !customer_name || (!isDineIn && (!customer_phone || !customer_email))) {
       return NextResponse.json(
         { error: 'Missing required fields: tracking_id, customer_name, customer_phone, customer_email' },
+        { status: 400 }
+      );
+    }
+
+    if (isDineIn && !findTableById(Number(table_id))) {
+      return NextResponse.json(
+        { error: 'Invalid table. Please re-scan the QR code on your table.' },
         { status: 400 }
       );
     }
@@ -55,12 +67,13 @@ export async function POST(request: NextRequest) {
     const order = createOrder({
       tracking_id,
       customer_name,
-      customer_phone,
-      customer_email,
+      customer_phone: customer_phone || '',
+      customer_email: customer_email || '',
       fulfillment_type,
       fulfillment_address: fulfillment_address || null,
       fulfillment_area: fulfillment_area || null,
       fulfillment_notes: fulfillment_notes || null,
+      table_id: isDineIn ? Number(table_id) : null,
       subtotal,
       delivery_fee: delivery_fee ?? 0,
       total,

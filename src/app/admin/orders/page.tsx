@@ -29,6 +29,7 @@ interface Order {
   fulfillment_type: string;
   fulfillment_address: string;
   fulfillment_area: string;
+  table_number?: string | null;
   total: number;
   status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'out_for_delivery' | 'delivered' | 'cancelled';
   payment_confirmed: boolean;
@@ -323,6 +324,9 @@ export default function OrdersPage() {
                       <div>
                         <p className="font-bold text-slate-900">{order.tracking_id}</p>
                         <p className="text-sm text-slate-600">{order.customer_name}</p>
+                        {order.fulfillment_type === 'dine-in' && order.table_number && (
+                          <p className="text-xs font-bold text-primary">🍽 Table {order.table_number}</p>
+                        )}
                       </div>
                       <Badge className={statusColors[order.status]}>
                         {statusLabels[order.status]}
@@ -377,7 +381,11 @@ export default function OrdersPage() {
                         <TableCell>
                           <div>
                             <p className="font-medium text-slate-900">{order.customer_name}</p>
-                            <p className="text-sm text-slate-500">{order.customer_phone}</p>
+                            <p className={`text-sm ${order.fulfillment_type === 'dine-in' && order.table_number ? 'font-bold text-primary' : 'text-slate-500'}`}>
+                              {order.fulfillment_type === 'dine-in' && order.table_number
+                                ? `🍽 Table ${order.table_number}`
+                                : order.customer_phone}
+                            </p>
                           </div>
                         </TableCell>
                         <TableCell>{order.order_items?.reduce((sum, item) => sum + item.quantity, 0) || 0} items</TableCell>
@@ -480,7 +488,11 @@ export default function OrdersPage() {
                     </div>
                     <div>
                       <p className="text-slate-500">Fulfillment Type</p>
-                      <p className="font-medium capitalize">{selectedOrder.fulfillment_type}</p>
+                      <p className="font-medium capitalize">
+                        {selectedOrder.fulfillment_type === 'dine-in' && selectedOrder.table_number
+                          ? `Dine-in · Table ${selectedOrder.table_number}`
+                          : selectedOrder.fulfillment_type}
+                      </p>
                     </div>
                     {selectedOrder.fulfillment_type === 'delivery' && (
                       <div className="md:col-span-2">

@@ -78,6 +78,8 @@ function ConfirmationContent() {
   }
 
   const whatsappUrl = getWhatsAppOrderUrl(order, bank);
+  const isDineIn = order.fulfillment.type === 'dine-in';
+  const tableNumber = order.fulfillment.tableNumber;
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -96,10 +98,12 @@ function ConfirmationContent() {
             <CheckCircle2 className="w-10 h-10 text-primary" />
           </div>
           <h1 className="text-4xl md:text-5xl font-headline font-bold mb-3">
-            Order placed!
+            {isDineIn ? 'Sent to the kitchen!' : 'Order placed!'}
           </h1>
           <p className="text-muted-foreground">
-            Thank you, {order.customer.fullName}. We&apos;ll confirm once payment is verified.
+            {isDineIn
+              ? `Thank you, ${order.customer.fullName}. Your order is being prepared and will be served to Table ${tableNumber ?? ''}.`
+              : `Thank you, ${order.customer.fullName}. We'll confirm once payment is verified.`}
           </p>
         </div>
 
@@ -131,12 +135,14 @@ function ConfirmationContent() {
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Total paid</span>
+              <span className="text-muted-foreground">{isDineIn ? 'Total (pay after your meal)' : 'Total paid'}</span>
               <span className="font-bold text-primary">{formatNaira(order.total)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Fulfillment</span>
-              <span className="font-bold capitalize">{order.fulfillment.type}</span>
+              <span className="font-bold capitalize">
+                {isDineIn ? `Dine-in · Table ${tableNumber ?? ''}` : order.fulfillment.type}
+              </span>
             </div>
             {order.fulfillment.type === 'delivery' && (
               <div className="flex gap-2 text-muted-foreground pt-1">
@@ -167,20 +173,35 @@ function ConfirmationContent() {
           </div>
         </div>
 
-        <div className="mt-8 glass-card rounded-[2rem] p-6 border-border text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Notify us on WhatsApp about your order so we can confirm payment and start preparing your meal.
-          </p>
-          <Button
-            asChild
-            className="w-full h-14 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg"
-          >
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <WhatsAppIcon className="w-5 h-5 mr-2" />
-              Notify us on WhatsApp
-            </a>
-          </Button>
-        </div>
+        {isDineIn ? (
+          <div className="mt-8 glass-card rounded-[2rem] p-6 border-border text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Still hungry or thirsty? Add more to your table — everything lands on one bill
+              you settle after your meal.
+            </p>
+            <Button
+              asChild
+              className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-lg"
+            >
+              <Link href="/#menu">Order more for Table {tableNumber ?? ''}</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8 glass-card rounded-[2rem] p-6 border-border text-center">
+            <p className="text-sm text-muted-foreground mb-4">
+              Notify us on WhatsApp about your order so we can confirm payment and start preparing your meal.
+            </p>
+            <Button
+              asChild
+              className="w-full h-14 rounded-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg"
+            >
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <WhatsAppIcon className="w-5 h-5 mr-2" />
+                Notify us on WhatsApp
+              </a>
+            </Button>
+          </div>
+        )}
 
         <div className="mt-8 text-center">
           <Button asChild variant="link" className="text-muted-foreground">

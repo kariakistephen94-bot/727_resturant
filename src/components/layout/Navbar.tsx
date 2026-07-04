@@ -63,7 +63,7 @@ export function Navbar() {
               >
                 <ShoppingCart className="w-5 h-5" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-primary text-[10px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center font-bold">
                     {itemCount > 99 ? '99+' : itemCount}
                   </span>
                 )}
