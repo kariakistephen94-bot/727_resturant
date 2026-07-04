@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Premium dark barbecue grill with smoke",
+      "imageUrl": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&q=80&w=1200",
+      "imageHint": "luxury barbecue"
+    },
+    {
+      "id": "asun-special",
+      "description": "Lagos style spicy Asun (goat meat)",
+      "imageUrl": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=600",
+      "imageHint": "grilled meat"
+    },
+    {
+      "id": "bbq-chicken",
+      "description": "Flame grilled BBQ chicken quarters",
+      "imageUrl": "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&q=80&w=600",
+      "imageHint": "grilled chicken"
+    },
+    {
+      "id": "catfish-bbq",
+      "description": "Whole grilled catfish with spices",
+      "imageUrl": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=600",
+      "imageHint": "grilled fish"
+    },
+    {
+      "id": "beef-bbq",
+      "description": "Tender beef skewers with peppers",
+      "imageUrl": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?auto=format&fit=crop&q=80&w=600",
+      "imageHint": "beef kebab"
+    },
+    {
+      "id": "turkey-bbq",
+      "description": "Golden grilled turkey wings",
+      "imageUrl": "https://images.unsplash.com/photo-1580651214613-f66b263d91f2?auto=format&fit=crop&q=80&w=600",
+      "imageHint": "grilled turkey"
+    },
+    {
+      "id": "vibe-1",
+      "description": "Luxury Lagos lounge interior",
+      "imageUrl": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=800",
+      "imageHint": "luxury lounge"
+    },
+    {
+      "id": "vibe-2",
+      "description": "Premium cocktails at night",
+      "imageUrl": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&q=80&w=800",
+      "imageHint": "nightlife cocktails"
+    },
+    {
+      "id": "vibe-3",
+      "description": "Chef preparing grill",
+      "imageUrl": "https://images.unsplash.com/photo-1551135049-8a33b5883817?auto=format&fit=crop&q=80&w=800",
+      "imageHint": "chef grill"
+    }
+  ]
+}

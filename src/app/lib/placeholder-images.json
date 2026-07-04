@@ -1,0 +1,59 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Premium dark barbecue grill with smoke",
+      "imageUrl": "https://picsum.photos/seed/bbq1/1200/800",
+      "imageHint": "luxury barbecue"
+    },
+    {
+      "id": "asun-special",
+      "description": "Lagos style spicy Asun (goat meat)",
+      "imageUrl": "https://picsum.photos/seed/asun/600/450",
+      "imageHint": "grilled meat"
+    },
+    {
+      "id": "bbq-chicken",
+      "description": "Flame grilled BBQ chicken quarters",
+      "imageUrl": "https://picsum.photos/seed/chicken/600/450",
+      "imageHint": "grilled chicken"
+    },
+    {
+      "id": "catfish-bbq",
+      "description": "Whole grilled catfish with spices",
+      "imageUrl": "https://picsum.photos/seed/fish/600/450",
+      "imageHint": "grilled fish"
+    },
+    {
+      "id": "beef-bbq",
+      "description": "Tender beef skewers with peppers",
+      "imageUrl": "https://picsum.photos/seed/beef/600/450",
+      "imageHint": "beef kebab"
+    },
+    {
+      "id": "turkey-bbq",
+      "description": "Golden grilled turkey wings",
+      "imageUrl": "https://picsum.photos/seed/turkey/600/450",
+      "imageHint": "grilled turkey"
+    },
+    {
+      "id": "vibe-1",
+      "description": "Luxury Lagos lounge interior",
+      "imageUrl": "https://picsum.photos/seed/vibe1/800/800",
+      "imageHint": "luxury lounge"
+    },
+    {
+      "id": "vibe-2",
+      "description": "Premium cocktails at night",
+      "imageUrl": "https://picsum.photos/seed/vibe2/800/800",
+      "imageHint": "nightlife cocktails"
+    },
+    {
+      "id": "vibe-3",
+      "description": "Chef preparing grill",
+      "imageUrl": "https://picsum.photos/seed/vibe3/800/800",
+      "imageHint": "chef grill"
+    }
+  ]
+}

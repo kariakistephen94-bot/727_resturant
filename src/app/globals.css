@@ -1,0 +1,110 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* 724 Restaurant And Bar palette — Deep Wine (#580b1b) / Gold / Warm Cream —
+       tuned for an Apple-style calm: cleaner neutrals, softer borders, restrained accents. */
+    --background: 350 30% 99%;
+    --foreground: 348 18% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 348 18% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 348 18% 12%;
+    --primary: 347.5 77.8% 19.4%; /* #580b1b exact */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 348 45% 95%;
+    --secondary-foreground: 348 60% 22%;
+    --muted: 350 20% 96%;
+    --muted-foreground: 348 8% 46%;
+    --accent: 40 85% 52%;
+    --accent-foreground: 348 18% 12%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 348 12% 91%;
+    --input: 348 12% 91%;
+    --ring: 347.5 77.8% 19.4%;
+    --radius: 1.25rem;
+
+    /* Apple-style elevation: soft, layered, low-contrast — never glowy */
+    --shadow-soft: 0 1px 2px rgba(30, 8, 14, .04), 0 6px 18px rgba(30, 8, 14, .05);
+    --shadow-card: 0 2px 6px rgba(30, 8, 14, .05), 0 14px 36px rgba(30, 8, 14, .07);
+    --shadow-lift: 0 8px 16px rgba(30, 8, 14, .07), 0 28px 60px rgba(30, 8, 14, .11);
+
+    /* Apple's standard easing */
+    --ease-apple: cubic-bezier(.4, 0, .2, 1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+    /* A whisper of warmth at the top instead of a heavy wine glow */
+    background-image: radial-gradient(
+      90% 60% at 50% -10%,
+      rgba(88, 11, 27, 0.05) 0%,
+      transparent 60%
+    );
+    background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline text-foreground;
+    letter-spacing: -0.02em;
+  }
+  /* Tighten the big Inter display moments the way Apple does */
+  .tracking-apple { letter-spacing: -0.03em; }
+}
+
+/* ---- Surfaces ---- */
+.glass {
+  @apply bg-white/70 backdrop-blur-xl border border-white/60;
+  box-shadow: var(--shadow-card);
+}
+.glass-dark {
+  @apply bg-white/55 backdrop-blur-2xl border border-white/50;
+  box-shadow: var(--shadow-soft);
+}
+.glass-card {
+  @apply bg-card border border-border;
+  box-shadow: var(--shadow-soft);
+}
+
+/* ---- Apple elevation utilities ---- */
+.shadow-soft { box-shadow: var(--shadow-soft); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-lift { box-shadow: var(--shadow-lift); }
+.ease-apple { transition-timing-function: var(--ease-apple); }
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-[#580b1b] to-[#a41d38];
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-foreground/15 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-foreground/25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
