@@ -13,8 +13,6 @@ import { Analytics } from "@vercel/analytics/next"
 export const metadata: Metadata = {
   title: '724 Restaurant And Bar | Open 24/7 in Agidingbi, Ikeja',
   description: '724 Restaurant And Bar — grilled fish, pounded yam & egusi, isi ewu, chilled drinks and good vibes on NERDC Road, Agidingbi, Lagos. Dine-in, takeaway & delivery, open 24 hours.',
-  // The og:image itself comes from src/app/opengraph-image.png (served with a
-  // content hash, so link previews refresh whenever the image changes).
   openGraph: {
     title: '724 Restaurant And Bar | Open 24/7 in Agidingbi, Ikeja',
     description: 'Grilled fish, pounded yam & egusi, isi ewu and chilled drinks on NERDC Road, Agidingbi, Lagos. Dine-in, takeaway & delivery — open 24 hours, every day.',
